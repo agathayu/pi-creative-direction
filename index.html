@@ -1111,16 +1111,19 @@ document.querySelectorAll('.chart-area').forEach(function(area) {
     activeIndex = index;
     lbImg.src   = srcs[index];
     lb.classList.add('active');
+    document.body.style.overflow = 'hidden'; // prevent background scroll
   }
   function closeLb() {
     lb.classList.remove('active');
     lbImg.src   = '';
     activeIndex = -1;
+    document.body.style.overflow = ''; // restore scroll
   }
 
   lb.addEventListener('click', closeLb);
   lbImg.addEventListener('click', function(e) { e.stopPropagation(); });
 
+  // Arrow key navigation
   window.addEventListener('keydown', function(e) {
     if (activeIndex === -1) return;
     if (e.keyCode === 39 || e.key === 'ArrowRight')
@@ -1128,6 +1131,21 @@ document.querySelectorAll('.chart-area').forEach(function(area) {
     else if (e.keyCode === 37 || e.key === 'ArrowLeft')
       openAt(activeSrcs, (activeIndex - 1 + activeSrcs.length) % activeSrcs.length);
   });
+
+  // Touch swipe navigation
+  var touchStartX = 0;
+  lb.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+  }, { passive: true });
+  lb.addEventListener('touchend', function(e) {
+    if (activeIndex === -1) return;
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) < 40) return; // ignore taps
+    if (dx < 0)
+      openAt(activeSrcs, (activeIndex + 1) % activeSrcs.length);       // swipe left → next
+    else
+      openAt(activeSrcs, (activeIndex - 1 + activeSrcs.length) % activeSrcs.length); // swipe right → prev
+  }, { passive: true });
 
   // ── Merch pile ──────────────────────────────────────────────────────────────
   var merchImgs  = document.querySelectorAll('.merch-pile-wrap img');
